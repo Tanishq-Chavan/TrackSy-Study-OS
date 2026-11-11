@@ -1,26 +1,118 @@
 "use client";
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 
 export default function TrackSyDashboard() {
   const [syllabusData, setSyllabusData] = useState([
     {
       id: 1,
-      subject: "Math",
-      icon: "functions",
-      topic: "Calculus: Limits & Derivatives",
+      subject: "C Programming & DS",
+      icon: "code",
+      topic: "Pointers, Recursion & Binary Trees",
       status: "Completed",
-      theme: { bg: "bg-[#f59e0b]/20", text: "text-[#855300]", statusBg: "bg-[#d3eabe]/30", statusText: "text-[#576a47]" }
+      theme: { bg: "bg-[#10b981]/20", text: "text-[#065f46]", statusBg: "bg-[#d1fae5]", statusText: "text-[#065f46]" }
     },
     {
       id: 2,
-      subject: "Biology",
-      icon: "biotech",
-      topic: "Cell Structure and Function",
+      subject: "Theory of Computation",
+      icon: "schema",
+      topic: "DFA Minimization & Context-Free Grammars",
+      status: "Completed",
+      theme: { bg: "bg-[#8b5cf6]/20", text: "text-[#5b21b6]", statusBg: "bg-[#ede9fe]", statusText: "text-[#5b21b6]" }
+    },
+    {
+      id: 3,
+      subject: "DBMS",
+      icon: "database",
+      topic: "B+ Trees & Conflict Serializability",
       status: "In Progress",
-      theme: { bg: "bg-[#e99f87]/20", text: "text-[#894f3b]", statusBg: "bg-[#f59e0b]/30", statusText: "text-[#613b00]" }
+      theme: { bg: "bg-[#f59e0b]/20", text: "text-[#855300]", statusBg: "bg-[#fef3c7]", statusText: "text-[#92400e]" }
+    },
+    {
+      id: 4,
+      subject: "Computer Networks",
+      icon: "hub",
+      topic: "TCP Flow/Congestion Control & Subnetting",
+      status: "In Progress",
+      theme: { bg: "bg-[#0ea5e9]/20", text: "text-[#0369a1]", statusBg: "bg-[#e0f2fe]", statusText: "text-[#0369a1]" }
+    },
+    {
+      id: 5,
+      subject: "Operating Systems",
+      icon: "memory",
+      topic: "Virtual Memory Paging & Semaphore Synchronization",
+      status: "Pending",
+      theme: { bg: "bg-[#ef4444]/20", text: "text-[#991b1b]", statusBg: "bg-[#fee2e2]", statusText: "text-[#991b1b]" }
+    },
+    {
+      id: 6,
+      subject: "Comp. Org. & Arch.",
+      icon: "developer_board",
+      topic: "Pipeline Hazards & Cache Mapping Techniques",
+      status: "Pending",
+      theme: { bg: "bg-[#6b7280]/20", text: "text-[#374151]", statusBg: "bg-[#f3f4f6]", statusText: "text-[#374151]" }
     }
   ]);
+
+  // Session & Timer State
+  const [isTimerOpen, setIsTimerOpen] = useState(false);
+  const [selectedTopic, setSelectedTopic] = useState("DBMS");
+  const [timerSeconds, setTimerSeconds] = useState(25 * 60);
+  const [isTimerRunning, setIsTimerRunning] = useState(false);
+  const [totalStudyMinutes, setTotalStudyMinutes] = useState(2550); // ~42.5 hrs default
+
+  useEffect(() => {
+    let interval: NodeJS.Timeout | null = null;
+    if (isTimerRunning && timerSeconds > 0) {
+      interval = setInterval(() => {
+        setTimerSeconds((prev) => prev - 1);
+        setTotalStudyMinutes((prev) => prev + (1 / 60));
+      }, 1000);
+    } else if (timerSeconds === 0 && isTimerRunning) {
+      setIsTimerRunning(false);
+      alert("Study session complete! Take a break.");
+    }
+    return () => {
+      if (interval) clearInterval(interval);
+    };
+  }, [isTimerRunning, timerSeconds]);
+
+  const toggleTimer = () => setIsTimerRunning(!isTimerRunning);
+  const resetTimer = (mins: number = 25) => {
+    setIsTimerRunning(false);
+    setTimerSeconds(mins * 60);
+  };
+
+  const formatTimer = (sec: number) => {
+    const m = Math.floor(sec / 60).toString().padStart(2, "0");
+    const s = (sec % 60).toString().padStart(2, "0");
+    return `${m}:${s}`;
+  };
+
+  // Syllabus Status Cycler
+  const toggleStatus = (id: number) => {
+    setSyllabusData((prev) =>
+      prev.map((item) => {
+        if (item.id === id) {
+          const nextStatus =
+            item.status === "Pending" ? "In Progress" : item.status === "In Progress" ? "Completed" : "Pending";
+          const statusBg =
+            nextStatus === "Completed" ? "bg-[#d1fae5]" : nextStatus === "In Progress" ? "bg-[#fef3c7]" : "bg-[#fee2e2]";
+          const statusText =
+            nextStatus === "Completed" ? "text-[#065f46]" : nextStatus === "In Progress" ? "text-[#92400e]" : "text-[#991b1b]";
+          return { ...item, status: nextStatus, theme: { ...item.theme, statusBg, statusText } };
+        }
+        return item;
+      })
+    );
+  };
+
+  // Calculations
+  const completedTopics = syllabusData.filter((i) => i.status === "Completed").length;
+  const inProgressTopics = syllabusData.filter((i) => i.status === "In Progress").length;
+  const pendingTopics = syllabusData.filter((i) => i.status === "Pending").length;
+  const completionPercentage = Math.round((completedTopics / syllabusData.length) * 100);
+  const displayHours = (totalStudyMinutes / 60).toFixed(1);
 
   return (
     <>
@@ -41,213 +133,274 @@ export default function TrackSyDashboard() {
             transform: translateY(-2px);
             border-color: #f59e0b;
         }
-        .custom-scrollbar::-webkit-scrollbar { width: 6px; }
-        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
-        .custom-scrollbar::-webkit-scrollbar-thumb { background: #e4e2de; border-radius: 10px; }
       `}</style>
 
-      <div className="text-[#1b1c1a]">
-        {/* SideNavBar Anchor */}
+      <div className="text-[#1b1c1a] min-h-screen">
+        {/* Sidebar */}
         <nav className="h-screen w-64 fixed left-0 top-0 bg-[#f5f3ef] shadow-sm flex flex-col py-4 z-20">
           <div className="px-6 mb-10">
             <h1 className="text-2xl font-bold text-[#855300]">TrackSy</h1>
-            <p className="text-sm text-[#534434]">Study Smart</p>
+            <p className="text-sm text-[#534434]">Syllabus-Centric Study OS</p>
           </div>
           <div className="flex-1 flex flex-col gap-1">
-            <a className="flex items-center gap-4 px-6 py-3 transition-colors duration-200 hover:text-[#855300] text-[#855300] font-bold border-r-4 border-[#855300] active:scale-95" href="#">
+            <a className="flex items-center gap-4 px-6 py-3 transition-colors duration-200 text-[#855300] font-bold border-r-4 border-[#855300] bg-[#eae7df]" href="#">
               <span className="material-symbols-outlined">dashboard</span>
               <span className="text-sm">Dashboard</span>
             </a>
-            <a className="flex items-center gap-4 px-6 py-3 transition-colors duration-200 hover:text-[#855300] text-[#534434] active:scale-95" href="#">
+            <a className="flex items-center gap-4 px-6 py-3 transition-colors duration-200 text-[#534434] hover:text-[#855300]" href="#">
               <span className="material-symbols-outlined">menu_book</span>
               <span className="text-sm">Syllabus</span>
             </a>
-            <a className="flex items-center gap-4 px-6 py-3 transition-colors duration-200 hover:text-[#855300] text-[#534434] active:scale-95" href="#">
-              <span className="material-symbols-outlined">timer</span>
+            <a className="flex items-center gap-4 px-6 py-3 transition-colors duration-200 text-[#534434] hover:text-[#855300]" href="#">
+              <span className="material-symbols-outlined">schedule</span>
               <span className="text-sm">Study Sessions</span>
             </a>
-            <a className="flex items-center gap-4 px-6 py-3 transition-colors duration-200 hover:text-[#855300] text-[#534434] active:scale-95" href="#">
+            <a className="flex items-center gap-4 px-6 py-3 transition-colors duration-200 text-[#534434] hover:text-[#855300]" href="#">
               <span className="material-symbols-outlined">check_circle</span>
               <span className="text-sm">Tasks</span>
             </a>
           </div>
+
           <div className="px-4 mb-4">
-            <button className="w-full bg-[#855300] text-white py-3 rounded-xl text-sm shadow-sm transition-all hover:bg-[#653e00] active:scale-95">
-              Start Session
+            <button 
+              onClick={() => setIsTimerOpen(true)}
+              className="w-full bg-[#855300] hover:bg-[#6b4200] text-white py-3 rounded-xl font-medium shadow-md transition-all active:scale-95 flex items-center justify-center gap-2"
+            >
+              <span className="material-symbols-outlined">timer</span>
+              <span>Start Session</span>
             </button>
-          </div>
-          <div className="mt-auto border-t border-[#d8c3ad] pt-4 flex flex-col gap-1">
-            <a className="flex items-center gap-4 px-6 py-3 transition-colors duration-200 hover:text-[#855300] text-[#534434] active:scale-95" href="#">
-              <span className="material-symbols-outlined">settings</span>
-              <span className="text-sm">Settings</span>
-            </a>
-            <a className="flex items-center gap-4 px-6 py-3 transition-colors duration-200 hover:text-[#855300] text-[#534434] active:scale-95" href="#">
-              <span className="material-symbols-outlined">help_outline</span>
-              <span className="text-sm">Help</span>
-            </a>
           </div>
         </nav>
 
-        {/* TopAppBar Anchor */}
-        <header className="fixed top-0 right-0 w-[calc(100%-16rem)] z-10 bg-[#fbf9f5] border-b border-[#d8c3ad] flex justify-between items-center px-6 h-16 ml-64">
-          <div className="flex items-center gap-4">
+        {/* Main Content */}
+        <main className="ml-64 p-8 min-h-screen">
+          {/* Header */}
+          <div className="flex justify-between items-center mb-8">
             <div className="flex items-center gap-4">
-              <a className="text-base text-[#855300] font-bold border-b-2 border-[#855300] transition-all duration-200" href="#">Focus Mode</a>
-              <a className="text-base text-[#534434] hover:text-[#855300] transition-all duration-200" href="#">Resources</a>
+              <span className="font-semibold text-lg text-[#855300] border-b-2 border-[#855300] pb-1 cursor-pointer">Focus Mode</span>
+              <span className="text-sm text-gray-500 hover:text-black cursor-pointer pb-1">GATE Resources</span>
             </div>
-          </div>
-          <div className="flex items-center gap-4 flex-1 justify-end">
-            <div className="relative w-64 mr-4 focus-within:ring-2 focus-within:ring-[#f59e0b] rounded-full">
-              <input className="w-full bg-[#f5f3ef] border-none rounded-full py-2 pl-10 pr-4 text-base focus:outline-none transition-all" placeholder="Search sessions..." type="text" />
-              <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-[#534434]" style={{ fontSize: '18px' }}>search</span>
-            </div>
-            <button className="bg-[#d3eabe] text-[#576a47] px-4 py-2 rounded-lg text-sm hover:opacity-80 active:opacity-60 transition-all">
-              New Task
-            </button>
-            <div className="flex items-center gap-2 text-[#534434]">
-              <button className="p-2 rounded-full hover:bg-[#eae8e4] transition-colors">
-                <span className="material-symbols-outlined">notifications</span>
-              </button>
-              <button className="p-2 rounded-full hover:bg-[#eae8e4] transition-colors">
-                <span className="material-symbols-outlined">account_circle</span>
+            <div className="flex items-center gap-4">
+              <div className="relative">
+                <input 
+                  type="text" 
+                  placeholder="Search subjects or topics..." 
+                  className="bg-white border border-[#d8c3ad]/50 rounded-full pl-10 pr-4 py-2 text-sm focus:outline-none focus:border-[#855300] w-64 shadow-sm"
+                />
+                <span className="material-symbols-outlined absolute left-3 top-2.5 text-gray-400 text-sm">search</span>
+              </div>
+              <button className="bg-[#855300] hover:bg-[#6b4200] text-white text-sm px-4 py-2 rounded-full font-medium transition-all shadow-sm">
+                + New Task
               </button>
             </div>
           </div>
-        </header>
 
-        {/* Main Content Canvas */}
-        <main className="ml-64 pt-24 px-6 pb-10 min-h-screen">
-          <div className="max-w-[1440px] mx-auto">
-            
-            {/* Welcome Header */}
-            <div className="mb-10">
-              <h2 className="text-4xl font-bold text-[#1b1c1a] mb-1">Welcome back, Alex!</h2>
-              <p className="text-lg text-[#534434]">You've reached 85% of your weekly study goal. Keep the momentum!</p>
-            </div>
+          {/* Welcome Banner */}
+          <div className="mb-8">
+            <h2 className="text-3xl font-extrabold text-[#1b1c1a]">Welcome back, Tanishq!</h2>
+            <p className="text-[#534434] text-sm mt-1">
+              You are currently at {completionPercentage}% completion on core technical subjects. Keep the momentum going!
+            </p>
+          </div>
 
-            {/* Metrics Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-10">
-              <div className="tonal-card rounded-xl p-6 flex flex-col justify-between min-h-[160px]">
-                <div className="flex justify-between items-start">
-                  <span className="text-sm text-[#534434]">Total Study Hours</span>
-                  <div className="bg-[#f59e0b]/10 p-2 rounded-lg">
-                    <span className="material-symbols-outlined text-[#855300]">schedule</span>
-                  </div>
+          {/* Stat Cards */}
+          <div className="grid grid-cols-3 gap-6 mb-8">
+            <div className="tonal-card p-6 rounded-2xl flex justify-between items-start">
+              <div>
+                <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">Total Study Hours</p>
+                <div className="flex items-baseline gap-2">
+                  <span className="text-4xl font-black text-[#1b1c1a]">{displayHours}</span>
+                  <span className="text-gray-500 font-medium">hrs</span>
                 </div>
-                <div>
-                  <p className="text-4xl font-bold text-[#1b1c1a]">42.5 <span className="text-xl font-normal text-[#534434]">hrs</span></p>
-                  <p className="text-xs text-[#b7cea3] mt-1 flex items-center gap-1">
-                    <span className="material-symbols-outlined" style={{ fontSize: '14px' }}>trending_up</span> +12% from last week
-                  </p>
-                </div>
+                <p className="text-xs text-emerald-600 font-medium mt-2">↑ Active Tracker Enabled</p>
               </div>
-
-              <div className="tonal-card rounded-xl p-6 flex flex-col justify-between min-h-[160px]">
-                <div className="flex justify-between items-start">
-                  <span className="text-sm text-[#534434]">Syllabus Completion %</span>
-                  <div className="bg-[#d3eabe]/20 p-2 rounded-lg">
-                    <span className="material-symbols-outlined text-[#516441]">auto_graph</span>
-                  </div>
-                </div>
-                <div className="mt-4">
-                  <div className="flex justify-between items-end mb-1">
-                    <p className="text-4xl font-bold text-[#1b1c1a]">65<span className="text-xl font-normal text-[#534434]">%</span></p>
-                  </div>
-                  <div className="w-full h-2 bg-[#eae8e4] rounded-full overflow-hidden">
-                    <div className="h-full bg-[#f59e0b] rounded-full" style={{ width: '65%' }}></div>
-                  </div>
-                </div>
-              </div>
-
-              <div className="tonal-card rounded-xl p-6 flex flex-col justify-between min-h-[160px]">
-                <div className="flex justify-between items-start">
-                  <span className="text-sm text-[#534434]">Pending Revisions</span>
-                  <div className="bg-[#e99f87]/20 p-2 rounded-lg">
-                    <span className="material-symbols-outlined text-[#894f3b]">history_edu</span>
-                  </div>
-                </div>
-                <div>
-                  <p className="text-4xl font-bold text-[#1b1c1a]">12 <span className="text-xl font-normal text-[#534434]">items</span></p>
-                  <button className="text-sm text-[#855300] mt-1 hover:underline flex items-center gap-1">
-                    View all items <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>chevron_right</span>
-                  </button>
-                </div>
+              <div className="p-3 bg-[#fef3c7] text-[#855300] rounded-xl">
+                <span className="material-symbols-outlined">schedule</span>
               </div>
             </div>
 
-            {/* Bento Layout Main Content */}
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-              <div className="lg:col-span-2 tonal-card rounded-xl overflow-hidden flex flex-col">
-                <div className="p-6 border-b border-[#d8c3ad] flex justify-between items-center bg-[#ffffff]">
-                  <h3 className="text-xl font-medium text-[#1b1c1a]">Syllabus Quick-View</h3>
-                  <button className="text-[#534434] hover:text-[#855300]">
-                    <span className="material-symbols-outlined">more_horiz</span>
-                  </button>
+            <div className="tonal-card p-6 rounded-2xl flex justify-between items-start">
+              <div className="w-full mr-4">
+                <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">Syllabus Completion</p>
+                <div className="flex items-baseline gap-1 mb-3">
+                  <span className="text-4xl font-black text-[#1b1c1a]">{completionPercentage}</span>
+                  <span className="text-xl font-bold text-gray-500">%</span>
                 </div>
-                <div className="overflow-x-auto custom-scrollbar">
-                  <table className="w-full text-left">
-                    <thead className="bg-[#f5f3ef] text-[#534434] text-sm">
-                      <tr>
-                        <th className="px-6 py-4 font-medium">Subject</th>
-                        <th className="px-6 py-4 font-medium">Topic</th>
-                        <th className="px-6 py-4 font-medium text-right">Status</th>
+                <div className="w-full bg-gray-100 h-2.5 rounded-full overflow-hidden">
+                  <div 
+                    className="bg-amber-500 h-full rounded-full transition-all duration-500" 
+                    style={{ width: `${completionPercentage}%` }}
+                  />
+                </div>
+              </div>
+              <div className="p-3 bg-emerald-50 text-emerald-700 rounded-xl">
+                <span className="material-symbols-outlined">trending_up</span>
+              </div>
+            </div>
+
+            <div className="tonal-card p-6 rounded-2xl flex justify-between items-start">
+              <div>
+                <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">Pending Revisions</p>
+                <div className="flex items-baseline gap-2">
+                  <span className="text-4xl font-black text-[#1b1c1a]">{inProgressTopics + pendingTopics}</span>
+                  <span className="text-gray-500 font-medium">topics</span>
+                </div>
+                <p className="text-xs text-amber-700 font-medium mt-2">{inProgressTopics} in progress • {pendingTopics} unvisited</p>
+              </div>
+              <div className="p-3 bg-[#fee2e2] text-[#991b1b] rounded-xl">
+                <span className="material-symbols-outlined">flag</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Bottom Grid: Syllabus & Focus Mode Card */}
+          <div className="grid grid-cols-3 gap-6">
+            {/* Syllabus Table */}
+            <div className="col-span-2 tonal-card rounded-2xl p-6">
+              <div className="flex justify-between items-center mb-4">
+                <h3 className="font-bold text-lg text-[#1b1c1a]">Syllabus Quick-View</h3>
+                <span className="text-xs text-gray-400">Click status badge to toggle state</span>
+              </div>
+              <div className="overflow-x-auto">
+                <table className="w-full text-left text-sm">
+                  <thead>
+                    <tr className="border-b border-gray-100 text-gray-400 text-xs">
+                      <th className="pb-3 font-medium">Subject</th>
+                      <th className="pb-3 font-medium">Active Topic</th>
+                      <th className="pb-3 font-medium text-right">Status</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-gray-100">
+                    {syllabusData.map((item) => (
+                      <tr key={item.id} className="hover:bg-amber-50/30 transition-colors">
+                        <td className="py-4 flex items-center gap-3">
+                          <div className={`p-2 rounded-lg ${item.theme.bg} ${item.theme.text}`}>
+                            <span className="material-symbols-outlined text-sm">{item.icon}</span>
+                          </div>
+                          <span className="font-semibold text-gray-800">{item.subject}</span>
+                        </td>
+                        <td className="py-4 text-gray-600">{item.topic}</td>
+                        <td className="py-4 text-right">
+                          <button
+                            onClick={() => toggleStatus(item.id)}
+                            className={`px-3 py-1 rounded-full text-xs font-semibold transition-all hover:scale-105 active:scale-95 ${item.theme.statusBg} ${item.theme.statusText}`}
+                          >
+                            {item.status}
+                          </button>
+                        </td>
                       </tr>
-                    </thead>
-                    <tbody className="divide-y divide-[#d8c3ad] text-base">
-                      {syllabusData.map((item) => (
-                        <tr key={item.id} className="hover:bg-[#f5f3ef] transition-colors">
-                          <td className="px-6 py-5">
-                            <div className="flex items-center gap-3">
-                              <div className={`w-8 h-8 rounded ${item.theme.bg} flex items-center justify-center`}>
-                                <span className={`material-symbols-outlined ${item.theme.text}`} style={{ fontSize: '18px' }}>{item.icon}</span>
-                              </div>
-                              {item.subject}
-                            </div>
-                          </td>
-                          <td className="px-6 py-5 text-[#534434]">{item.topic}</td>
-                          <td className="px-6 py-5 text-right">
-                            <span className={`px-3 py-1 rounded-full ${item.theme.statusBg} ${item.theme.statusText} text-xs font-medium`}>{item.status}</span>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>                  
-                  </table>
-                </div>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            {/* Right Side Cards */}
+            <div className="flex flex-col gap-6">
+              <div className="tonal-card rounded-2xl p-6">
+                <h3 className="font-bold text-lg text-[#1b1c1a] mb-2">Focus Mode</h3>
+                <p className="text-xs text-[#534434] mb-4">
+                  Enter a deep study state tied directly to your syllabus topic.
+                </p>
+                <button
+                  onClick={() => setIsTimerOpen(true)}
+                  className="w-full bg-[#fbf9f5] border border-[#d8c3ad] hover:bg-[#855300] hover:text-white text-[#855300] font-medium py-2.5 rounded-xl text-sm transition-all flex items-center justify-center gap-2"
+                >
+                  <span className="material-symbols-outlined text-base">play_circle</span>
+                  <span>Open Timer</span>
+                </button>
               </div>
 
-              <div className="flex flex-col gap-4">
-                <div className="tonal-card rounded-xl p-6 bg-gradient-to-br from-[#f5f3ef] to-[#efeeea] relative overflow-hidden h-[240px]">
-                  <div className="relative z-10">
-                    <h4 className="text-xl font-medium text-[#855300] mb-2">Focus Mode</h4>
-                    <p className="text-base text-[#534434] mb-6">Enter a deep study state with curated ambient sounds.</p>
-                    <button className="bg-white/80 backdrop-blur-sm border border-[#d8c3ad] px-6 py-2 rounded-full text-sm text-[#1b1c1a] hover:bg-white transition-all flex items-center gap-2">
-                      <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>play_arrow</span> Tune In
-                    </button>
-                  </div>
+              <div className="tonal-card rounded-2xl p-6 border-l-4 border-l-[#ef4444]">
+                <div className="flex justify-between items-start mb-2">
+                  <h4 className="font-bold text-sm text-[#1b1c1a]">Priority Topic</h4>
+                  <span className="bg-red-100 text-red-700 text-[10px] font-bold px-2 py-0.5 rounded uppercase">High</span>
                 </div>
-
-                <div className="tonal-card rounded-xl p-6">
-                  <div className="flex justify-between items-center mb-4">
-                    <h4 className="text-sm font-bold text-[#1b1c1a] uppercase tracking-wider">Next Priority</h4>
-                    <span className="w-2 h-2 rounded-full bg-[#ba1a1a] animate-pulse"></span>
-                  </div>
-                  <div className="flex gap-4 items-start">
-                    <div className="w-12 h-12 rounded-full bg-[#ffddb8] flex-shrink-0 flex items-center justify-center">
-                      <span className="material-symbols-outlined text-[#855300]">edit_note</span>
-                    </div>
-                    <div>
-                      <h5 className="text-lg font-medium text-[#1b1c1a]">Bio Report Finalizing</h5>
-                      <p className="text-xs text-[#534434] mt-1">Due Today, 5:00 PM</p>
-                      <div className="mt-4 flex gap-2">
-                        <span className="px-2 py-1 rounded bg-[#e99f87]/20 text-[#894f3b] text-[10px] font-bold uppercase tracking-tighter">High Priority</span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
+                <p className="text-sm font-semibold text-gray-800">Operating Systems</p>
+                <p className="text-xs text-gray-500 mt-1">Virtual Memory & Paging Algorithms</p>
               </div>
             </div>
           </div>
         </main>
+
+        {/* Focus Timer Modal Overlay */}
+        {isTimerOpen && (
+          <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+            <div className="bg-white rounded-3xl p-8 max-w-md w-full shadow-2xl border border-amber-100">
+              <div className="flex justify-between items-center mb-6">
+                <h3 className="text-xl font-bold text-[#855300]">Focus Session</h3>
+                <button 
+                  onClick={() => { setIsTimerRunning(false); setIsTimerOpen(false); }}
+                  className="text-gray-400 hover:text-black material-symbols-outlined"
+                >
+                  close
+                </button>
+              </div>
+
+              <div className="mb-4">
+                <label className="text-xs font-semibold text-gray-500 uppercase block mb-1">Target Subject</label>
+                <select 
+                  value={selectedTopic} 
+                  onChange={(e) => setSelectedTopic(e.target.value)}
+                  className="w-full border border-gray-200 rounded-xl p-2.5 text-sm focus:outline-none focus:border-[#855300]"
+                >
+                  {syllabusData.map((item) => (
+                    <option key={item.id} value={item.subject}>
+                      {item.subject} - {item.topic}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="my-8 text-center">
+                <span className="text-6xl font-black text-[#1b1c1a] tracking-tight font-mono">
+                  {formatTimer(timerSeconds)}
+                </span>
+                <p className="text-xs text-gray-400 mt-2">
+                  {isTimerRunning ? "Session in progress... stay focused!" : "Paused"}
+                </p>
+              </div>
+
+              <div className="flex gap-3 justify-center mb-6">
+                <button
+                  onClick={() => resetTimer(25)}
+                  className="px-3 py-1.5 text-xs bg-gray-100 hover:bg-gray-200 rounded-lg font-medium"
+                >
+                  25 min
+                </button>
+                <button
+                  onClick={() => resetTimer(50)}
+                  className="px-3 py-1.5 text-xs bg-gray-100 hover:bg-gray-200 rounded-lg font-medium"
+                >
+                  50 min
+                </button>
+                <button
+                  onClick={() => resetTimer(5)}
+                  className="px-3 py-1.5 text-xs bg-gray-100 hover:bg-gray-200 rounded-lg font-medium"
+                >
+                  5 min Break
+                </button>
+              </div>
+
+              <div className="flex gap-4">
+                <button
+                  onClick={toggleTimer}
+                  className={`flex-1 py-3 rounded-xl font-bold text-white transition-all ${
+                    isTimerRunning ? "bg-amber-600 hover:bg-amber-700" : "bg-[#855300] hover:bg-[#6b4200]"
+                  }`}
+                >
+                  {isTimerRunning ? "Pause" : "Start Focus"}
+                </button>
+                <button
+                  onClick={() => resetTimer(25)}
+                  className="px-5 py-3 rounded-xl font-bold bg-gray-100 hover:bg-gray-200 text-gray-700"
+                >
+                  Reset
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </>
   );
